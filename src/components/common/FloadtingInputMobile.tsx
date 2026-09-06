@@ -4,6 +4,7 @@ import React, { useState } from "react";
 
 interface FloatingInputProps {
   id?: string;
+  name?: string;
   type?: "text" | "password" | "email" | "tel";
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -19,6 +20,7 @@ interface FloatingInputProps {
 
 export default function FloatingInputMobile({
   id,
+  name,
   type = "text",
   value,
   onChange,
@@ -42,6 +44,7 @@ export default function FloatingInputMobile({
     <div className={`relative w-full ${className}`}>
       <input
         id={id}
+        name={name}
         type={effectiveType}
         value={value}
         onChange={onChange}

